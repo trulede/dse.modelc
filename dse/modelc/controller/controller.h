@@ -43,6 +43,9 @@ typedef struct ModelFunctionChannel {
 
     /* Signal Transform; only allocated if transforms are present. */
     SignalTransform* signal_transform;
+
+    /* Signal Annotation reference (to YAML nodes). */
+    void** signal_annotation;
 } ModelFunctionChannel;
 
 
@@ -96,9 +99,10 @@ typedef struct ControllerMarshalSpec {
 /* controller.c */
 
 /* These initialise the controller and load the Model lib. */
-DLL_PRIVATE int controller_init(Endpoint* endpoint);
+DLL_PRIVATE int controller_init(Endpoint* endpoint, SimulationSpec* sim);
 DLL_PRIVATE int controller_init_channel(ModelInstanceSpec* model_instance,
     const char* channel_name, const char** signal_name, uint32_t signal_count);
+DLL_PRIVATE Controller* controller_object_ref(SimulationSpec* sim);
 
 /* These are called indirectly from the Model, via _model_function_register()
    and model_configure_channel_*(). */
@@ -113,8 +117,8 @@ DLL_PRIVATE void controller_bus_ready(SimulationSpec* sim);
 DLL_PRIVATE int  controller_step(SimulationSpec* sim);
 DLL_PRIVATE int  controller_step_phased(SimulationSpec* sim);
 
-DLL_PRIVATE void controller_stop(void);
-DLL_PRIVATE void controller_dump_debug(void);
+DLL_PRIVATE void controller_stop(SimulationSpec* sim);
+DLL_PRIVATE void controller_dump_debug(SimulationSpec* sim);
 DLL_PRIVATE void controller_exit(SimulationSpec* sim);
 
 /* Additional marshal operations that are called in special cases. */

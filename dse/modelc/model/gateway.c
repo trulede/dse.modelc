@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <assert.h>
+#include <stdio.h>
 #include <dse/testing.h>
 #include <dse/logger.h>
 #include <dse/clib/util/yaml.h>
@@ -112,7 +113,7 @@ int model_gw_setup(ModelGatewayDesc* gw, const char* name,
     gw->clock_epsilon = step_size * 0.01;
 
     /* Setup the ModelC library. */
-    ModelCArguments args;
+    ModelCArguments args = { 0 };
     modelc_set_default_args(&args, "gateway", step_size, end_time);
     args.log_level = log_level;
     modelc_parse_arguments(&args, argc, (char**)gw->argv, "Gateway");

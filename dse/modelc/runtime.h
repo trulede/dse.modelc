@@ -114,7 +114,7 @@ DLL_PUBLIC ModelInstanceSpec* modelc_get_model_instance(
 DLL_PUBLIC int  modelc_run(SimulationSpec* sim, bool run_async);
 DLL_PUBLIC void modelc_exit(SimulationSpec* sim);
 DLL_PUBLIC int  modelc_sync(SimulationSpec* sim);
-DLL_PUBLIC void modelc_shutdown(void);
+DLL_PUBLIC void modelc_shutdown(SimulationSpec* sim);
 DLL_PUBLIC int  modelc_model_create(
      SimulationSpec* sim, ModelInstanceSpec* mi, ModelVTable* model_vtable);
 
@@ -183,8 +183,8 @@ typedef struct RuntimeModelDesc {
 } RuntimeModelDesc;
 
 DLL_PUBLIC RuntimeModelDesc* model_runtime_create(RuntimeModelDesc* model);
-DLL_PUBLIC int model_runtime_step(
-    RuntimeModelDesc* model, double* model_time, double stop_time);
+DLL_PUBLIC int               model_runtime_step(
+                  RuntimeModelDesc* model, double* model_time, double stop_time);
 DLL_PUBLIC void model_runtime_destroy(RuntimeModelDesc* model);
 
 

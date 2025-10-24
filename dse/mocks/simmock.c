@@ -4,12 +4,15 @@
 
 #include <dlfcn.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 #include <linux/limits.h>
 #include <dse/testing.h>
 #include <dse/clib/util/yaml.h>
 #include <dse/ncodec/codec.h>
+#include <dse/ncodec/interface/frame.h>
+#include <dse/ncodec/interface/pdu.h>
 #include <dse/mocks/simmock.h>
 
 
@@ -112,7 +115,6 @@ static void __free_stub_sv(SignalVector* sv)
         if (sv->binary[i]) free(sv->binary[i]);
         NCodecInstance* nc = sv->ncodec[i];
         if (nc) {
-            if (nc->stream) model_sv_stream_destroy(nc->stream);
             ncodec_close((NCODEC*)nc);
         }
     }

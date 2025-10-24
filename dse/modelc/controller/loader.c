@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <errno.h>
+#include <stdio.h>
 #include <stddef.h>
 #include <assert.h>
 #include <dlfcn.h>
@@ -12,9 +13,6 @@
 #include <dse/modelc/controller/controller.h>
 #include <dse/modelc/controller/model_private.h>
 #include <dse/modelc/model.h>
-
-
-extern Controller* controller_object_ref(void);
 
 
 extern ModelDesc* __model_gw_create__(ModelDesc* m);
@@ -74,7 +72,7 @@ error_dl:
 int controller_load_models(SimulationSpec* sim)
 {
     assert(sim);
-    Controller* controller = controller_object_ref();
+    Controller* controller = controller_object_ref(sim);
     int         rc = 0;
 
     controller->simulation = sim;

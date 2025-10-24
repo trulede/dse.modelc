@@ -38,7 +38,7 @@ jobs:
       image: ghcr.io/boschglobal/dse-gcc-builder:main
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Build package metadata
         id: package_meta
@@ -96,34 +96,28 @@ jobs:
 
   test_e2e:
     runs-on: [ubuntu-latest]
-    needs: [build, runtimes, tools]
+    needs: [build, tools]
     container:
       image: ghcr.io/boschglobal/dse-testscript:latest
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: image_simer
-          path: /tmp
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: image_testscript
           path: /tmp
 
       - name: Load images
         run: |
           docker load --input /tmp/simer.tar
-          docker load --input /tmp/testscript.tar
           docker image ls -a
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: ${{ env.package_name }}-linux-amd64-sandbox
           path: .
@@ -142,12 +136,30 @@ jobs:
           export HOST_DOCKER_WORKSPACE=${{ env.HOST_DOCKER_WORKSPACE }}
           make test_e2e
 
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: [ubuntu-latest]
+    needs: [build, test_e2e]
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Create Release from Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref_name }}
+        run: |
+          gh release create "$tag" \
+            --notes-from-tag
+
   publish:
     if: startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
     runs-on: [ubuntu-latest]
-    needs: [build, test_e2e]
+    needs: [release]
     strategy:
       matrix:
         package_arch:
@@ -157,7 +169,7 @@ jobs:
           - windows-x64
           - windows-x86
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -176,37 +188,37 @@ jobs:
         run: |
           echo "PACKAGE_VERSION=${{ fromJSON(steps.package_meta.outputs.json).labels['org.opencontainers.image.version'] }}" >> $GITHUB_ENV
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: ${{ env.package_name }}-${{ matrix.package_arch }}-package
           path: ${{ env.build_dir }}/_dist
 
-      - name: Publish
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: |
+      - name: Upload Release Asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref_name }}
+        run: |
+          gh release upload "$tag" \
             ${{ env.build_dir }}/_dist/${{ env.package_name }}-${{ env.PACKAGE_VERSION }}-${{ matrix.package_arch }}.zip
 
   docker_push:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: [ubuntu-latest]
-    needs: [runtimes, tools, test_e2e]
+    needs: [tools, test_e2e]
     strategy:
       matrix:
         container:
           - simer
-          - testscript
     steps:
       - name: Log in to the Container registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: image_${{ matrix.container }}
           path: /tmp
@@ -217,80 +229,22 @@ jobs:
           docker image ls -a
           docker image push --all-tags ${{ env.REGISTRY }}/${{ env.IMAGE_BASE_NAME }}-${{ matrix.container }}
 
-  runtimes:
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: [ubuntu-latest]
-    needs: [build]
-    strategy:
-      matrix:
-        container:
-          - testscript
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_BASE_NAME }}-${{ matrix.container }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-
-      - name: Version
-        if: startsWith(github.ref, 'refs/tags/')
-        id: package
-        run: |
-          echo "PACKAGE_VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}" >> $GITHUB_ENV
-
-      - name: Build Image
-        uses: docker/build-push-action@v4
-        with:
-          push: false
-          context: .
-          file: ./extra/docker/${{ matrix.container }}/Dockerfile
-          build-args: |
-             PACKAGE_VERSION=${{ env.PACKAGE_VERSION }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=docker,dest=/tmp/${{ matrix.container }}.tar
-
-      - name: Upload image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: image_${{ matrix.container }}
-          path: /tmp/${{ matrix.container }}.tar
-          retention-days: 1
-
-
   tools:
-    if: startsWith(github.ref, 'refs/tags/')
     runs-on: [ubuntu-latest]
     needs: [build]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Log in to the Container registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
@@ -307,15 +261,15 @@ jobs:
         run: |
           echo "PACKAGE_VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}" >> $GITHUB_ENV
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: ${{ env.package_name }}-linux-amd64-sandbox
           path: sandbox/ModelC-linux-amd64-sandbox
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: ${{ env.package_name }}-linux-x86-sandbox
           path: sandbox/ModelC-linux-x86-sandbox
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: ${{ env.package_name }}-linux-i386-sandbox
           path: sandbox/ModelC-linux-i386-sandbox
@@ -350,7 +304,7 @@ jobs:
           cp -r extra/tools/trace extra/tools/simer/build/stage
 
       - name: Build and push
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           push: false
           context: extra/tools/simer
@@ -386,17 +340,17 @@ jobs:
             arch: linux-amd64
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Log in to the Container registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
@@ -413,7 +367,7 @@ jobs:
         run: |
           echo "PACKAGE_VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}" >> $GITHUB_ENV
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: ${{ env.package_name }}-${{ matrix.arch }}-sandbox
           path: .
@@ -424,7 +378,7 @@ jobs:
           find ${{ env.build_dir }}/_out -type f -name '*' -exec ls -sh --color=auto {} \;
 
       - name: Build and push
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           push: true
           context: .

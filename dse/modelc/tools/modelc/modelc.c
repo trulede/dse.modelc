@@ -27,6 +27,8 @@
 /* Other things. */
 #define GENERAL_BUFFER_LEN 255
 
+/* Signal handling. */
+static SimulationSpec* __sim = NULL;
 
 static void signal_handler(int signum)
 {
@@ -46,7 +48,7 @@ static void signal_handler(int signum)
     }
     /* Attempt a clean exit from the SimBus. */
     perror("Signal caught, starting controlled exit!");
-    modelc_shutdown();
+    modelc_shutdown(__sim);
 }
 
 
@@ -55,8 +57,8 @@ int main(int argc, char** argv)
 {
     int             rc;
     char            general_buffer[GENERAL_BUFFER_LEN];
-    ModelCArguments args;
-    SimulationSpec  sim;
+    ModelCArguments args = { 0 };
+    SimulationSpec  sim = { 0 };
 
     /* Additional bookkeeping data. */
     log_notice("Version: %s", MODELC_VERSION);
@@ -91,8 +93,8 @@ int main(int argc, char** argv)
     rc = modelc_configure(&args, &sim);
     if (rc) exit(rc);
 
-
     /* Start and run the Controller and (dynamically linked) Model. */
+    __sim = &sim;
     signal(SIGTERM, signal_handler);
     signal(SIGINT, signal_handler);
 #ifdef _WIN32
