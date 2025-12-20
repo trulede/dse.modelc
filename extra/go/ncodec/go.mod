@@ -3,7 +3,7 @@ module github.com/boschglobal/dse.modelc/extra/go/ncodec
 go 1.24.2
 
 require (
-	github.com/google/flatbuffers v25.9.23+incompatible
+	github.com/google/flatbuffers v25.12.19+incompatible
 	github.com/stretchr/testify v1.11.1
 )
 
