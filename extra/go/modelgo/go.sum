@@ -1,5 +1,7 @@
 github.com/boschglobal/dse.modelc/extra/go/ncodec v0.0.0-20250715163709-0ecd1c6646be h1:k5JW0GnsgFceGi31cL/WKPEdaIIS8CG7SuOfxNSOmPQ=
 github.com/boschglobal/dse.modelc/extra/go/ncodec v0.0.0-20250715163709-0ecd1c6646be/go.mod h1:E6JBNUpwC66N+PWhd2GlUjzbM6SmBa1ZS3txW0k6C70=
+github.com/boschglobal/dse.modelc/extra/go/ncodec v0.0.0-20260227150949-7b314ba1d66b h1:rwqqr940Nph24+9os2tHnwnp+Jq0glVgw+0cs5ZZ8lM=
+github.com/boschglobal/dse.modelc/extra/go/ncodec v0.0.0-20260227150949-7b314ba1d66b/go.mod h1:B5TuoQ/cnvtva8OFaWll0albZCzOW/wYwDC6QuDgpBU=
 github.com/boschglobal/dse.schemas/code/go/dse v1.2.25 h1:2TfBLQhU+Q8uaO65YO4NqRYC3uevSl9RdzkVTlLB/dg=
 github.com/boschglobal/dse.schemas/code/go/dse v1.2.25/go.mod h1:1pxTw2DGf81svt1NZrzbn7kE7l1fsOjEmDpqKdEHl2Q=
 github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=

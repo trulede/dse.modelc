@@ -3,7 +3,7 @@ module github.com/boschglobal/dse.modelc/extra/go/modelgo
 go 1.24.2
 
 require (
-	github.com/boschglobal/dse.modelc/extra/go/ncodec v0.0.0-20250715163709-0ecd1c6646be
+	github.com/boschglobal/dse.modelc/extra/go/ncodec v0.0.0-20260227150949-7b314ba1d66b
 	github.com/boschglobal/dse.schemas/code/go/dse v1.2.25
 	github.com/google/flatbuffers v25.9.23+incompatible
 	github.com/redis/go-redis/v9 v9.14.0
