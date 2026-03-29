@@ -6,7 +6,7 @@ require (
 	github.com/boschglobal/dse.clib/extra/go/command v1.0.35
 	github.com/boschglobal/dse.schemas/code/go/dse v1.2.17
 	github.com/elliotchance/orderedmap/v3 v3.1.0
-	github.com/go-echarts/go-echarts/v2 v2.5.2
+	github.com/go-echarts/go-echarts/v2 v2.7.0
 	github.com/go-echarts/snapshot-chromedp v0.0.5
 )
 
